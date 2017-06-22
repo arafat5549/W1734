@@ -23,8 +23,10 @@
 - ​
 
 
-
 ### 常用的命令 Liunx版本
+
+- [Java开发必会的Linux命令](http://www.hollischuang.com/archives/800)
+
 
 - cd
   - 进入对应的文件夹
