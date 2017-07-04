@@ -12,6 +12,15 @@ import java.io.RandomAccessFile;
 
 public class IoDemo {
 	
+//	//private IoDemo(){}
+//	public IoDemo(){}
+//	public IoDemo(String name){
+//		
+//	}
+	
+
+	
+	
 	//MAIN方法就是我们程序的入口
 	public static void main(String[] args) throws IOException {
 		/*
