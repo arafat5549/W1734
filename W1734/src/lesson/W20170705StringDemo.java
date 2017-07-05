@@ -6,12 +6,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
+/**
+ * @author wyy
+ *
+ */
 public class W20170705StringDemo {
 
 	public static void main(String[] args) throws IOException {
 		//cipherDemo();
-		
-		randomDemo();
+		String t="people";
+		char c[]={'p', 'e','o', 'p', 'l', 'e'};
+		System.out.println(t.equals(c));
+		//randomDemo();
 	}
 	
 	/**
