@@ -23,8 +23,43 @@ public class ThreadDemo {
 		
 		//threadDemo();
 		
-		counterDemo();
+		//counterDemo();
+		
+		test();
 	}
+	
+	/**
+	 * 17、请用程序写出，10个线程对同一个int类型的变量a自增运算，当a==100时，程序结束
+	 */
+	static void test(){
+		//1.创建线程的方式# Runnable
+		Runnable r = new Runnable() {
+			int a = 0;
+			@Override
+			public void run() {
+				synchronized (this) 
+				{
+					while(a<10000){
+						a++;
+					}
+					if(a>=100)
+					 System.out.println("a="+a);
+				}
+			}
+			
+			public int getA(){
+				return a;
+			}
+		};
+		
+		//2.开10个检查
+		for(int i=0;i<10;i++){
+			Thread t = new Thread(r);
+			t.start();//开线程
+		}
+		
+	}
+	
 	
 	static  void threadDemo(){
 		for (int i = 0; i <5; i++) {
@@ -50,6 +85,8 @@ public class ThreadDemo {
 		System.out.println("count="+myrunnable.getCount());
 	}
 }
+
+
 
 //计数器
 class Counter implements Runnable{
