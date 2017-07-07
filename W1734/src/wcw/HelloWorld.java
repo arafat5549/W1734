@@ -1,7 +1,8 @@
 package wcw;
 
 import java.io.IOException;
-import java.util.Random;
+import  java.util.Random;
+//import static poll.PollUtil.getInstance;//静态导入
 /**
  * 数组Demo
  * @author wyy
@@ -28,6 +29,9 @@ public class HelloWorld {
 	
 	
 	public static void main(String[] args) throws IOException {
+		
+		//getInstance().stablePoll();
+		
 		//MY_NAME = "";
 		
 		//System常用类

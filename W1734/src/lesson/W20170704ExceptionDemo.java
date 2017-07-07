@@ -1,6 +1,10 @@
 package lesson;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,7 +92,9 @@ public class W20170704ExceptionDemo {
 		//对象实例一份
 		//静态区
 		
-		StringBaseDemo();
+		//StringBaseDemo();
+		
+		readFile("F:\\RSATest.txt");
 	}
 	// == 比较的是内存的地址
 	// EQUALS 比较的是你房间里面的东西
@@ -194,4 +200,33 @@ public class W20170704ExceptionDemo {
 		Integer.parseInt("123");
 	}
 	
+	
+	//处理IO类的异常
+	public static String readFile(String path){
+		
+		File file = new File(path);
+		StringBuffer sb = new StringBuffer();
+		InputStream is = null;
+		try {
+			is =  new FileInputStream(file);
+			
+			byte buf[] =new byte[1024];
+			int idx = -1;
+			while((idx = is.read(buf))!=-1){
+				sb.append(new String(buf,0,idx));
+			}
+			//throw new IOException("我错了");
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+		finally{
+			try {
+				is.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return sb.toString();
+	}
 }
