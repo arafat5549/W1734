@@ -39,15 +39,18 @@ public class EchoClient implements Runnable{
 		 BufferedReader in = null;
 		try {
 			socket = new Socket(host, port);
-			out = new PrintWriter(socket.getOutputStream());
-			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			
-			out.println("QUERY TIME ORDER");
-            System.out.println("Send order 2 server succeed.");
+			while(true)
+			{
+				out = new PrintWriter(socket.getOutputStream(), true);
+				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				
+				out.println("QUERY TIME ORDER");
+				System.out.println("Send order 2 server succeed.");
 
-            String resp = in.readLine();
-            System.out.println("Now is : " + resp);
-			
+				String resp = in.readLine();
+				System.out.println("Now is : " + resp);
+			}
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {

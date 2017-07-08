@@ -10,19 +10,38 @@ import java.net.Socket;
 
 
 public class EchoServer implements Runnable {
-
+	
+	public static void main(String[] args) {
+		
+		EchoServer es = new EchoServer();
+		Thread t = new Thread(es);
+		t.start();
+	}
+	
+    private int port = 8091;
 	@Override
 	public void run() {
 		ServerSocket server = null;
 		Socket socket = null;
+		
+		 PrintWriter out = null;
+		 BufferedReader in = null;
 		try {
 			server = new ServerSocket(port);//1.服务器建立监听端口
 			System.out.println("Server Start in port:"+port);
-			while(true){
+			while(true)
+			{
 				socket = server.accept();//2.建立Socket连接
 				System.out.println("--------");
-					//3.处理数据流 - 
+			   //3.处理数据流 - 
+				out = new PrintWriter(socket.getOutputStream(), true);
+				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 				
+				out.println("Server");
+	            System.out.println("Send order 2 client succeed.");
+				
+	            String resp = in.readLine();
+	            System.out.println("Server#Now is : " + resp);
 			}
 		
 		} catch (IOException e) {
