@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -72,18 +73,32 @@ public class DBUtils {
 		}
 		return list;
 	}
-	//如何编写一套通用的JDBC连接
-	//泛型，反射
-	//1.提取出对象User，Bean对象（）  引入分层的概念 ，JavaBean位于实体entity或者model层
-	public static <T> List<T> queryBean(Connection conn,String sql,Class<T> t) throws SQLException, InstantiationException, IllegalAccessException{
+	
+	/**
+	 * 
+	 * 利用Statement编写通用查询
+	 * 
+	 * //如何编写一套通用的JDBC连接
+	   //泛型，反射
+	   //1.提取出对象User，Bean对象,  引入分层的概念 ，JavaBean位于实体entity或者model层
+	    * 
+	    Connection    ： 连接
+	    DriverManager ： 驱动管理
+	    Statement     ： 段落，为了一个连接能处理多个sql
+	    ResultSet     ： 结果集 ，游标 数据库游标都是从1开始，0代表连接成功
+	 * 
+	 * @param conn   连接
+	 * @param sql    sql语句
+	 * @param t      泛型类对象
+	 * @return
+	 */
+	public static <T> List<T> queryBeanStatment(Connection conn,String sql,Class<T> t) throws SQLException, InstantiationException, IllegalAccessException{
 		List<T> list = new ArrayList<>();
-		
 		Statement stmt = conn.createStatement();
 		//查询 应该返回结果集
 		ResultSet rs =  stmt.executeQuery(sql);
 		//结果集可以获取 元数据 MetaData
 		ResultSetMetaData rsmd = rs.getMetaData();
-		
 		//这张表总有有多少列
 		int columns = rsmd.getColumnCount();
 		while(rs.next()){
@@ -92,10 +107,49 @@ public class DBUtils {
 				 String columnName = rsmd.getColumnName(i+1);//数据库都是从1开始，0代表连接成功
 				 Object value = rs.getObject(columnName);
 				 //首字母大写
-				 columnName = columnName.substring(0,1).toUpperCase() +  columnName.substring(1);
-										 
-				 //System.out.println(columnName+","+value);
-				 
+				 columnName = columnName.substring(0,1).toUpperCase() +  columnName.substring(1);					 
+				 //System.out.println(columnName+","+value);x
+				 invokeMethodByName(obj,"set"+columnName,new Object[]{value});
+			}
+			list.add(obj);
+		}
+		return list;
+	}
+	/**
+	 * Statement通用修改
+	 * @throws SQLException 
+	 */
+	public static boolean executeBeanStatment(Connection conn,String sql) throws SQLException{
+		Statement stmt = conn.createStatement();
+		return stmt.execute(sql);
+	}
+	/**
+	 * PreparedStatement
+	 * 
+	 * Object ...objs 可变参数列表，一定要放在参数列表的最后
+	 * @throws SQLException 
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
+	 */
+	public static <T> List<T> queryBean(Connection conn,String sql,Class<T> t,Object ...objs) throws SQLException, InstantiationException, IllegalAccessException{
+		List<T> list = new ArrayList<>();
+		
+		//1.获取PreparedStatement
+		PreparedStatement ptmt  = conn.prepareStatement(sql);
+		int idx = 0;
+		for (Object object : objs) {
+			ptmt.setObject(++idx,object);
+		}
+		//
+		ResultSet rs =  ptmt.executeQuery();
+		ResultSetMetaData rsmd = rs.getMetaData();
+		int columns = rsmd.getColumnCount();
+		while(rs.next()){
+			T obj = t.newInstance();
+			for (int i = 0; i < columns; i++) {
+				 String columnName = rsmd.getColumnName(i+1);//数据库都是从1开始，0代表连接成功
+				 Object value = rs.getObject(columnName);
+				 columnName = columnName.substring(0,1).toUpperCase() +  columnName.substring(1);					 
 				 invokeMethodByName(obj,"set"+columnName,new Object[]{value});
 			}
 			list.add(obj);
@@ -103,7 +157,133 @@ public class DBUtils {
 		
 		return list;
 	}
-	 
+	
+	public static boolean executeBean(Connection conn,String sql,Object ...objs) throws SQLException{
+		PreparedStatement ptmt  = conn.prepareStatement(sql);
+		int idx = 0;
+		for (Object object : objs) {
+			ptmt.setObject(++idx,object);
+		}
+		boolean flag = ptmt.execute();
+		//conn.close();
+		return  flag;
+	}
+	
+	public static boolean executeBean(Connection conn,String sql,List<Object> params) throws SQLException{
+		PreparedStatement ptmt  = conn.prepareStatement(sql);
+		int idx = 0;
+		for (Object object : params) {
+			ptmt.setObject(++idx,object);
+		}
+		boolean flag = ptmt.execute();
+		//conn.close();
+		return  flag;
+	}
+	
+	/**
+	 * 批处理
+	 * @throws SQLException 
+	 */
+//	public static boolean batchExecute(Connection conn,String sql,Object ...objs) throws SQLException{
+//		PreparedStatement ptmt  = conn.prepareStatement(sql);
+//		int idx = 0;
+//		for (Object object : objs) {
+//			ptmt.setObject(++idx,object);
+//		}
+//		ptmt.addBatch();
+//	}
+	
+	
+	/**
+	 * 数据库批处理 Batch
+	 * 插入1万条数据
+	 * @throws SQLException 
+	 */
+	
+	private static void insertBatch0(Connection conn) throws SQLException{
+		long begin = System.currentTimeMillis();
+		String sql = "INSERT INTO sys_student(name) VALUES(?) ";
+		int max = 10000;
+		for (int i = 0; i < max; i++) {
+			executeBean(conn, sql, "Hello"+i);
+		}
+		System.out.println("insertBatch0运行时间:"+(System.currentTimeMillis()-begin));
+		
+	}
+	/**
+	 * 关闭自动事务#影响最大的部分 
+	 */
+	private static void insertBatch1(Connection conn) throws SQLException{
+		conn.setAutoCommit(false);
+		
+		long begin = System.currentTimeMillis();
+		String sql = "INSERT INTO sys_student(name) VALUES(?) ";
+		int max = 10000;
+		for (int i = 0; i < max; i++) {
+			executeBean(conn, sql, "Hello"+i);
+		}
+		conn.commit();//需要手动提交
+		System.out.println("insertBatch1运行时间:"+(System.currentTimeMillis()-begin));
+	}
+	/**
+	 * 批处理方式
+	 * 
+	 * 
+	 */
+	private static void insertBatch2(Connection conn) throws SQLException{
+		conn.setAutoCommit(false);
+		long begin = System.currentTimeMillis();
+		
+		String sql = "INSERT INTO sys_student(name) VALUES(?) ";
+		PreparedStatement ptmt  = conn.prepareStatement(sql);
+		int max = 10000;
+		for (int i = 0; i < max; i++) {
+			ptmt.setObject(1,"Hello"+i);
+			ptmt.addBatch();
+		}
+		ptmt.executeBatch();
+		
+		conn.commit();//需要手动提交
+		System.out.println("insertBatch1运行时间:"+(System.currentTimeMillis()-begin));
+	}
+	/**
+	 * INSERT可以拼接成
+	 * 一条SQL来运行
+	 * INSERT INTO sys_lesson VALUES
+		(1,'数学'),
+		(2,'英语'),
+		(3,'语文'),
+		(4,'物理'),
+		(5,'化学');
+	 */
+	private static void insertBatch3(Connection conn) throws SQLException{
+		conn.setAutoCommit(false);
+		long begin = System.currentTimeMillis();
+		
+		String sql = "INSERT INTO sys_student(name) VALUES ";
+		int max = 10000;
+		List<Object> params = new ArrayList<>();
+		for (int i = 0; i < max; i++) {
+			//ptmt.setObject(1,"Hello"+i);
+			//ptmt.addBatch();
+			if(i==max-1)
+			  sql += "(?)";
+			else
+			 sql += "(?),";
+			params.add("Hello"+i);
+		}
+		executeBean(conn, sql, params);
+		
+		conn.commit();//需要手动提交
+		System.out.println("insertBatch3运行时间:"+(System.currentTimeMillis()-begin));
+	}
+	
+	
+	
+	
+	
+	
+	
 	//反射reflect # 类的所有部分反射为对象  # 运行时起效的东西
 	static void reflectDemo() throws ClassNotFoundException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException{
 		//获取类的模型 有几种方式
@@ -192,20 +372,31 @@ public class DBUtils {
 	public static void main(String[] args) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		try {
 			Connection conn = openConnection();
-			String sql = "SELECT * FROM sys_student";
-//			//query(conn, sql);
-			List<SysStudent> list= queryBean(conn, sql,SysStudent.class);
-			System.out.println(list);
+//			//SQL注入问题
+//			String username = " 1=1' or '1=1 ";
+//			String sql = "SELECT * FROM sys_student WHERE name='"+username+"'";
+//			System.out.println(sql);
+//			List<SysStudent> list= queryBeanStatment(conn, sql,SysStudent.class);
+//			System.out.println(list);
+//			//? 占位符
+//			String sql2 ="SELECT * FROM sys_student WHERE name=?";
+//			List<SysStudent> list2= queryBean(conn, sql2,SysStudent.class,username);
+//			System.out.println(list2);
 			
+//			sql = "INSERT INTO sys_student(name) VALUES('哇哈哈')";
+//			executeBean(conn, sql);
 			
 			//reflectDemo();
+			
+			
+			//批处理
+			insertBatch3(conn);
+			
 		} catch (SecurityException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
-		} catch (InstantiationException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
+		}catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
