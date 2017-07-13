@@ -29,7 +29,7 @@ public class EchoServer implements Runnable {
 		try {
 			server = new ServerSocket(port);//1.服务器建立监听端口
 			System.out.println("Server Start in port:"+port);
-			while(true)
+			//while(true)
 			{
 				socket = server.accept();//2.建立Socket连接
 				System.out.println("--------");

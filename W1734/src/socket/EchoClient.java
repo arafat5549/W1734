@@ -40,12 +40,13 @@ public class EchoClient implements Runnable{
 		try {
 			socket = new Socket(host, port);
 			
-			while(true)
+			//while(true)
 			{
 				out = new PrintWriter(socket.getOutputStream(), true);
 				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 				
 				out.println("QUERY TIME ORDER");
+				out.flush();//默认不自动刷新 
 				System.out.println("Send order 2 server succeed.");
 
 				String resp = in.readLine();
