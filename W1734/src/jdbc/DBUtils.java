@@ -123,6 +123,34 @@ public class DBUtils {
 		Statement stmt = conn.createStatement();
 		return stmt.execute(sql);
 	}
+	
+	/**
+	 * 
+	 */
+	public static <T> T queryBean(String sql,Class<T> t,Object ...objs)
+	{
+		List<T> list = listBean(sql, t, objs);
+		return list.size()>0 ? list.get(0) : null;
+	}
+	
+	public static <T> List<T> listBean(String sql,Class<T> t,Object ...objs){
+		Connection conn = null;
+		List<T> list = new ArrayList<>();
+		try {
+			conn = openConnection();
+			list =  listBean(conn, sql, t, objs);
+		} catch (ClassNotFoundException | SQLException | InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
+		}finally{
+			try {
+				conn.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return list;
+	}
+	
 	/**
 	 * PreparedStatement
 	 * 
@@ -131,7 +159,7 @@ public class DBUtils {
 	 * @throws IllegalAccessException 
 	 * @throws InstantiationException 
 	 */
-	public static <T> List<T> queryBean(Connection conn,String sql,Class<T> t,Object ...objs) throws SQLException, InstantiationException, IllegalAccessException{
+	public static <T> List<T> listBean(Connection conn,String sql,Class<T> t,Object ...objs) throws SQLException, InstantiationException, IllegalAccessException{
 		List<T> list = new ArrayList<>();
 		
 		//1.获取PreparedStatement
@@ -147,10 +175,11 @@ public class DBUtils {
 		while(rs.next()){
 			T obj = t.newInstance();
 			for (int i = 0; i < columns; i++) {
-				 String columnName = rsmd.getColumnName(i+1);//数据库都是从1开始，0代表连接成功
-				 Object value = rs.getObject(columnName);
-				 columnName = columnName.substring(0,1).toUpperCase() +  columnName.substring(1);					 
-				 invokeMethodByName(obj,"set"+columnName,new Object[]{value});
+				 //String columnName = rsmd.getColumnName(i+1);//数据库都是从1开始，0代表连接成功
+				String columnLabel = rsmd.getColumnLabel(i+1);
+				Object value = rs.getObject(columnLabel);
+				columnLabel = columnLabel.substring(0,1).toUpperCase() +  columnLabel.substring(1);					 
+				 invokeMethodByName(obj,"set"+columnLabel,new Object[]{value});
 			}
 			list.add(obj);
 		}
@@ -347,7 +376,7 @@ public class DBUtils {
 			}
 		}
 		
-		System.out.println("获得："+method);
+		//System.out.println("获得："+method);
 		
 		if (method == null) {
 			throw new IllegalArgumentException("Could not find method [" + methodName + "] on target [" + obj + "]");
