@@ -187,6 +187,23 @@ public class DBUtils {
 		return list;
 	}
 	
+	public static boolean executeBean(String sql,Object ...objs){
+		Connection conn = null;
+		try {
+			conn = openConnection();
+			return executeBean(conn, sql, objs);
+		} catch (ClassNotFoundException | SQLException e) {
+			e.printStackTrace();
+		}finally{
+			try {
+				conn.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return false;
+	}
+	
 	public static boolean executeBean(Connection conn,String sql,Object ...objs) throws SQLException{
 		PreparedStatement ptmt  = conn.prepareStatement(sql);
 		int idx = 0;
@@ -194,7 +211,6 @@ public class DBUtils {
 			ptmt.setObject(++idx,object);
 		}
 		boolean flag = ptmt.execute();
-		//conn.close();
 		return  flag;
 	}
 	

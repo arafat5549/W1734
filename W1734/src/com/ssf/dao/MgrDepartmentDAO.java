@@ -34,6 +34,7 @@ public class MgrDepartmentDAO {
 	 */
 	private MgrDepartment findById(int id){
 		String sql ="SELECT "+COLUMN+" FROM mgr_department a WHERE a.id=?";
+		// SELECT * FROM mgr_department a WHERE a.id =1;
 		return DBUtils.queryBean(sql, MgrDepartment.class, id);
 	}
 	//
